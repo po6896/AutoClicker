@@ -30,3 +30,6 @@
 
 * **AutoHotkeyのインストール:** [https://autohotkey.com/](https://autohotkey.com/) から最新版をダウンロードし、インストールしてください。
 * **バージョン:** このスクリプトは、AutoHotkey v1.1.37.02でテストされています。
+  
+### その他
+OpenVR2Keyとの併用: OpenVR2Keyと組み合わせることで、VRコントローラのボタンを押している間、PC上のゲームを操作することができます。
