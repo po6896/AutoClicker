@@ -47,7 +47,6 @@ LoadSettings() {
     return settings
 }
 
-
 ; 設定を読み込んで、settings変数に保存
 settings := LoadSettings()
 
@@ -220,6 +219,32 @@ UpdateCPSDisplay() {
     SetTimer, RemoveTooltip, -3000
 }
 
+; ウィンドウを取得してカーソルを移動する関数
+ActivateWindowAndMoveCursor(windowTitle){
+    ; ウィンドウが存在するか確認し、存在する場合はアクティブにする
+    IfWinExist, %windowTitle%  ; 指定されたウィンドウタイトルが存在するかチェック
+    {
+        ; ウィンドウをアクティブにする
+        WinActivate, %windowTitle%
+        
+        ; ウィンドウの位置とサイズを取得
+        WinGetPos, x, y, width, height, %windowTitle%
+        
+        ; ウィンドウの中心座標を計算（整数で計算）
+        centerX := x + (width // 2)
+        centerY := y + (height // 2)
+
+        ; マウスカーソルをウィンドウの中心に移動
+        MouseMove, centerX, centerY
+    }
+    else
+    {
+        ; ウィンドウが見つからない場合、エラーメッセージを表示
+        MsgBox, %windowTitle% が見つかりません。ウィンドウが実行中か確認してください。
+    }
+}
+
+
 ; ツールチップを非表示にするタイマー
 RemoveTooltip:
     Tooltip
@@ -235,12 +260,18 @@ StartClicking:
         return  ; 既にクリック中の場合は何もしない
     Tooltip, % "クリック動作開始: " clickKey  ; クリック動作開始時にツールチップ表示
     isClicking := true
+    windowActivated := false  ; 初回ループのみウィンドウを取得する
     if (isToggled) {
         Loop {
             if (!isClicking) {
                 Tooltip  ; ツールチップを非表示にする
                 break
             }
+            if (!windowActivated) {
+                ActivateWindowAndMoveCursor(settings["targetWindow"])  ; 指定ウィンドウをアクティブにする
+                windowActivated := true  ; 初回ループフラグの切り替え
+            }
+
             ; クリック開始
             MouseClick, left, , , , D  ; クリック開始
             if (ErrorLevel) {
