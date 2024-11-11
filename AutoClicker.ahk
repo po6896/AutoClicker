@@ -72,9 +72,9 @@ toggleKey := settings["toggleKey"] != "" ? settings["toggleKey"] : "0"
 ; F12キーを押したときにスクリプトを強制終了する
 Hotkey, F12, ForceExit
 ; ホットキーの設定（固定のキーを使用）
-Hotkey, p, StartClicking   ; pキーでクリック開始
-Hotkey, p Up, StopClicking ; pキーを離すとクリック停止
-Hotkey, 0, ToggleClicking  ; 0キーでトグル切り替え
+Hotkey, %clickKey%, StartClicking   ; pキーでクリック開始
+Hotkey, %clickKey% Up, StopClicking ; pキーを離すとクリック停止
+Hotkey, %toggleKey%, ToggleClicking  ; 0キーでトグル切り替え
 
 ; === GUI（設定画面）の作成 ===
 Gui, Font, s10, Arial
@@ -206,11 +206,25 @@ UpdateCPSDisplay() {
     cps := settings["clickSpeed"] > 0 ? Round(1000 / settings["clickSpeed"], 2) : 0
     
     ; GUIの表示を更新
-    GuiControl,, ClickRate, Clicks Per Second: %cps%
+    GuiControl,, ClickRate, % cps
+    
+    ; GUIを再表示（必要に応じて）
+    Gui, Show
     
     ; マウスの遅延時間を設定
     SetMouseDelay, % settings["mouseDelay"]
+    
+    ; ツールチップを表示 (CPSと遅延時間を表示)
+    Tooltip, Clicks Per Second: %cps%
+    ; 3秒後にツールチップを自動で非表示にする（適宜調整可能）
+    SetTimer, RemoveTooltip, -3000
 }
+
+; ツールチップを非表示にするタイマー
+RemoveTooltip:
+    Tooltip
+return
+
 
 ; === クリック動作 ===
 
@@ -254,7 +268,7 @@ return
 ; トグル機能の切り替え
 ToggleClicking:
     isToggled := !isToggled
-    GuiControl,, ToggleStatus,  "Toggle Status: " (isToggled ? "ON" : "OFF")
+    GuiControl,, ToggleStatus, % "Toggle Status: " (isToggled ? "ON" : "OFF")
     SoundPlay, % (isToggled ? settings["onSound"] : settings["offSound"])  ; ON/OFFサウンド再生
     if (ErrorLevel) {
         MsgBox, 16, エラー, サウンドの再生に失敗しました。
@@ -267,10 +281,6 @@ return
 CloseTooltip:
     Tooltip  ; ツールチップを非表示にする
 return
-
-; ホットキーが離された時にツールチップを消す
-Hotkey, %clickKey% " Up", StopClicking, On
-Hotkey, %toggleKey% " Up", ToggleClicking, On
 
 ; ウィンドウを閉じるときの処理
 GuiClose:
