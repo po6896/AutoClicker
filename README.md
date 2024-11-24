@@ -6,7 +6,7 @@
 
 ### 1. 必要なツール
 - [AutoHotkey](https://www.autohotkey.com/)をインストールしてください。
-- https://github.com/DawsSangio/AHK_OpenVRをダウンロードしてください。
+- [AHK_OpenVR]([https://www.autohotkey.com/](https://github.com/DawsSangio/AHK_OpenVR))をダウンロードしてください。
 - このツールをダウンロードしたAHK_OpenVRのbinファイル内に入れ実行してください
 
 ### 2. スクリプトの設定
