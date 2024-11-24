@@ -1,11 +1,14 @@
-﻿; === 定数および設定ファイルの初期設定 ===
+﻿#include ahk_openvr.ahk
+
+; === 定数および設定ファイルの初期設定 ===
+;InitOpenVR(0)
+Gui, Add, DropDownList, vVendor AltSubmit, Oculus/Pico||Index|WMR gen1|WMR gen2|Vive Wands|
 settingsFile := "settings.ini"  ; 設定を保存するINIファイルの名前を指定
 
 ; AHK v1.1 では連想配列を使用する方法に変更
 defaultSettings := {}
 defaultSettings["clickSpeed"] := 15    ; クリックの速度
 defaultSettings["mouseDelay"] := 15    ; マウスの動作の遅延時間
-defaultSettings["clickKey"] := "P"     ; クリックを実行するためのキー
 defaultSettings["toggleKey"] := "0"    ; 設定を切り替えるためのキー
 defaultSettings["onSound"] := "SE_ON.wav"  ; ON時のサウンドファイル
 defaultSettings["offSound"] := "SE_OFF.wav"  ; OFF時のサウンドファイル
@@ -22,7 +25,7 @@ LoadSettings() {
     ; defaultSettingsのキーをリストで取得し、各キーの設定値を読み込む
     ; AHK v1.1では連想配列のキーを取得するには別途方法が必要
     ; ここでは手動でキーを設定します
-    keys := ["clickSpeed", "mouseDelay", "clickKey", "toggleKey", "onSound", "offSound", "targetWindow"]
+    keys := ["clickSpeed", "mouseDelay", "toggleKey", "onSound", "offSound", "targetWindow"]
 
     ; 各キーに対して設定ファイルから値を読み込む
     Loop, % keys.MaxIndex()  ; keys配列のインデックスに基づいてループ
@@ -65,14 +68,11 @@ SetMouseDelay, % settings["mouseDelay"]  ; マウスのクリック間隔を設�
 ; 初期化
 isToggled := false  ; トグルの初期状態をfalseに設定
 isClicking := false  ; クリック状態
-clickKey := settings["clickKey"] != "" ? settings["clickKey"] : "p"
 toggleKey := settings["toggleKey"] != "" ? settings["toggleKey"] : "0"
 
 ; F12キーを押したときにスクリプトを強制終了する
 Hotkey, F12, ForceExit
 ; ホットキーの設定（固定のキーを使用）
-Hotkey, %clickKey%, StartClicking   ; pキーでクリック開始
-Hotkey, %clickKey% Up, StopClicking ; pキーを離すとクリック停止
 Hotkey, %toggleKey%, ToggleClicking  ; 0キーでトグル切り替え
 
 ; === GUI（設定画面）の作成 ===
@@ -95,11 +95,6 @@ Gui, Add, Text, x260 y80, ms
 ; クリック毎秒表示
 Gui, Font, cGreen Bold
 Gui, Add, Text, x20 y120 vClickRate, Clicks Per Second: 0
-
-; スタートキーの設定フィールド
-Gui, Font, cBlack
-Gui, Add, Text, x20 y160, Click Start Key:
-Gui, Add, Edit, vclickKeyEdit gUpdateSettings x150 y160 w100, % settings["clickKey"]
 
 ; トグルキーの設定フィールド
 Gui, Add, Text, x20 y200, Toggle Key:
@@ -126,11 +121,40 @@ Gui, Add, Edit, vtargetWindowEdit gUpdateSettings x150 y360 w200, % settings["ta
 
 Gui, Show, w450 h400, Click Settings
 
+; === クリック動作 ===
+
+; クリック動作を開始
+; 初期化部分はそのまま
+
+Start:
+InitOpenVR(1)
+
+Loop {
+    ; 最新の入力状態を取得
+    Poll()
+    
+    if (isToggled) {
+        ; RTriggerが押されている場合にhogeを実行
+        if IsDown(ovrRTrigger) {
+            ; クリック開始
+            MouseClick, left, , , , D  ; クリック開始
+            Sleep, % settings["clickSpeed"]  ; クリック間隔の設定
+            MouseClick, left, , , , U  ; クリック終了
+            Vibrate(1, 1000)
+        }else{
+        ActivateWindowAndMoveCursor(settings["targetWindow"])  ; 指定ウィンドウをアクティブにする
+        Sleep, % settings["clickSpeed"]  ; クリック間隔の設定
+        }
+     }else{
+     Sleep, % settings["clickSpeed"]  ; クリック間隔の設定
+     }
+}
+return
+
 ; === 設定の保存と表示更新を行う関数 ===
 UpdateSettings:
     GuiControlGet, clickSpeedEdit
     GuiControlGet, mouseDelayEdit
-    GuiControlGet, clickKeyEdit
     GuiControlGet, toggleKeyEdit
     GuiControlGet, onSoundFile
     GuiControlGet, offSoundFile
@@ -139,7 +163,6 @@ UpdateSettings:
     ; 入力値の検証と保存
     settings["clickSpeed"] := ValidateInput(clickSpeedEdit, defaultSettings["clickSpeed"])
     settings["mouseDelay"] := ValidateInput(mouseDelayEdit, defaultSettings["mouseDelay"])
-    settings["clickKey"] := clickKeyEdit
     settings["toggleKey"] := toggleKeyEdit
     settings["onSound"] := onSoundFile
     settings["offSound"] := offSoundFile
@@ -180,7 +203,7 @@ SaveSettings() {
     global settings, settingsFile
     
     ; 設定のキーを手動で配列にリストとして設定
-    keys := ["clickSpeed", "mouseDelay", "clickKey", "toggleKey", "onSound", "offSound", "targetWindow"]
+    keys := ["clickSpeed", "mouseDelay", "toggleKey", "onSound", "offSound", "targetWindow"]
     
     ; 各設定項目をINIファイルに書き込む
     Loop, % keys.MaxIndex() {
@@ -250,49 +273,8 @@ RemoveTooltip:
     Tooltip
 return
 
-
-; === クリック動作 ===
-
-; クリック動作を開始
-StartClicking:
-    ; クリック状態チェック
-    if (isClicking)
-        return  ; 既にクリック中の場合は何もしない
-    Tooltip, % "クリック動作開始: " clickKey  ; クリック動作開始時にツールチップ表示
-    isClicking := true
-    windowActivated := false  ; 初回ループのみウィンドウを取得する
-    if (isToggled) {
-        Loop {
-            if (!isClicking) {
-                Tooltip  ; ツールチップを非表示にする
-                break
-            }
-            if (!windowActivated) {
-                ActivateWindowAndMoveCursor(settings["targetWindow"])  ; 指定ウィンドウをアクティブにする
-                windowActivated := true  ; 初回ループフラグの切り替え
-            }
-
-            ; クリック開始
-            MouseClick, left, , , , D  ; クリック開始
-            if (ErrorLevel) {
-                MsgBox, 16, エラー, クリック開始に失敗しました。
-                isClicking := false
-                return
-            }
-            Sleep, % settings["clickSpeed"]  ; クリック間隔の設定
-            MouseClick, left, , , , U  ; クリック終了
-            if (ErrorLevel) {
-                MsgBox, 16, エラー, クリック終了に失敗しました。
-                isClicking := false
-                return
-            }
-        }
-    }
-return
-
 ; クリック動作を停止
 StopClicking:
-    Tooltip, % "クリック動作停止: " clickKey  ; クリック動作停止時にツールチップ表示
     isClicking := false
 return
 
