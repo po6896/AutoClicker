@@ -49,21 +49,6 @@
 - **トグル機能**: 設定した`toggleKey`（デフォルトは0）を押すと、トグルがON/OFFで切り替わります。
 - **強制終了**: F12キーでスクリプトを終了できます。
 
-### 4. サンプル設定
-
-以下のサンプル設定では、クリック速度を20msに、マウス遅延を10msに設定し、VRChatウィンドウを対象にしています。
-
-```ini
-[Settings]
-clickSpeed=20
-mouseDelay=10
-clickKey=P
-toggleKey=0
-onSound=SE_ON.wav
-offSound=SE_OFF.wav
-targetWindow=VRChat
-
-
 AHK OpenVR - Helper library to provide AutoHotKey with OpenVR HMD and controllers states.
 https://github.com/DawsSangio/AHK_OpenVR
 2022 Daws
