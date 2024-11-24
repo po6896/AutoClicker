@@ -41,8 +41,8 @@
 - **トグル機能**: 設定した`toggleKey`（デフォルトは0）を押すと、トグルがON/OFFで切り替わります。
 - **強制終了**: F12キーでスクリプトを終了できます。
 
-AHK OpenVR - Helper library to provide AutoHotKey with OpenVR HMD and controllers states.
 https://github.com/DawsSangio/AHK_OpenVR
+AHK OpenVR - Helper library to provide AutoHotKey with OpenVR HMD and controllers states.
 2022 Daws
 
 AHK_OpenVR is released under the MIT License  
